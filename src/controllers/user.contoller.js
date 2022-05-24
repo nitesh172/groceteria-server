@@ -99,6 +99,8 @@ const verifyOtp = async (req, res) => {
         email: rightOtpFind.email,
       });
 
+      token = newToken(result)
+
       return res.status(201).send({
         token: token,
         data: result,
@@ -109,4 +111,15 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-module.exports = { create, verifyOtp };
+const profile = async (req, res) => {
+  try {
+    const user = req.user
+
+    return res.status(200).send(user)
+  } catch (error) {
+    console.log(error.message)
+    return res.status(500).send(error.message)
+  }
+}
+
+module.exports = { create, verifyOtp, profile };
