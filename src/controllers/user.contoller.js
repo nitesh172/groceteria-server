@@ -8,6 +8,7 @@ const transporter = require("../configs/email");
 
 const User = require("../models/user.model");
 const Otp = require("../models/otp.model");
+const Subscription = require("../models/subscription.model");
 
 const newToken = (user) => {
   return jwt.sign({ user }, process.env.JWT_SECRET_KEY);
@@ -99,7 +100,7 @@ const verifyOtp = async (req, res) => {
         email: rightOtpFind.email,
       });
 
-      token = newToken(result)
+      token = newToken(result);
 
       return res.status(201).send({
         token: token,
@@ -113,13 +114,74 @@ const verifyOtp = async (req, res) => {
 
 const profile = async (req, res) => {
   try {
-    const user = req.user
+    const user = req.user;
 
-    return res.status(200).send(user)
+    return res.status(200).send(user);
   } catch (error) {
-    console.log(error.message)
-    return res.status(500).send(error.message)
+    console.log(error.message);
+    return res.status(500).send(error.message);
   }
-}
+};
 
-module.exports = { create, verifyOtp, profile };
+const subscriptionCreate = async (req, res) => {
+  try {
+    const subscriptionHolder = await Subscription.find({
+      email: req.body.email,
+    });
+
+    if (subscriptionHolder.length !== 0)
+      return res.status(400).send({ message: "Already Subscription" });
+
+    const subscription = new Subscription(_.pick(req.body, ["email"]));
+
+    const result = await subscription.save();
+
+    return res.status(201).send(result);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error.message);
+  }
+};
+
+const subscriptionCheck = async (req, res) => {
+  try {
+    const email = req.params.email;
+    const subscriptionHolder = await Subscription.findOne({
+      email: email,
+    });
+
+    if (!subscriptionHolder)
+      return res.status(400).send({ message: "No Subscription" });
+
+    return res.status(200).send({ message: "Subscribed" });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error.message);
+  }
+};
+
+const updateCoin = async (req, res) => {
+  try {
+    const email = req.params.email;
+    const user = await User.findOne({ email: email });
+    const updateUser = await User.findByIdAndUpdate(
+      user._id,
+      { coin: parseInt(req.body.coin) + parseInt(user.coin)},
+      { new: true }
+    );
+
+    return res.status(200).send(updateUser);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error.message);
+  }
+};
+
+module.exports = {
+  create,
+  verifyOtp,
+  profile,
+  subscriptionCreate,
+  subscriptionCheck,
+  updateCoin,
+};
