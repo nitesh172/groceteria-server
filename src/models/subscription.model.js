@@ -9,7 +9,7 @@ var SubscriptionSchema = new Schema(
       required: true,
       max: 13,
     },
-    createdAt: {type: Date, default: Date.now, index: {expires: 10}}
+    createdAt: {type: Date, default: Date.now, index: {expires: 259200}}
   },
   {
     timestamps: true,

@@ -125,6 +125,12 @@ const profile = async (req, res) => {
 
 const subscriptionCreate = async (req, res) => {
   try {
+
+    const user = await User.findOne({ email: req.body.email });
+
+    if (user.coin <= 1000)
+      return res.status(400).send({ message: "Insuffcient Coin" });
+
     const subscriptionHolder = await Subscription.find({
       email: req.body.email,
     });
@@ -135,11 +141,6 @@ const subscriptionCreate = async (req, res) => {
     const subscription = new Subscription(_.pick(req.body, ["email"]));
 
     const result = await subscription.save();
-
-    const user = await User.findOne({ email: req.body.email });
-
-    if (user.coin <= 1000)
-      return res.status(400).send({ message: "Insuffcient Coin" });
 
     const updateUser = await User.findByIdAndUpdate(
       user._id,
