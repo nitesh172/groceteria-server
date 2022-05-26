@@ -136,7 +136,18 @@ const subscriptionCreate = async (req, res) => {
 
     const result = await subscription.save();
 
-    return res.status(201).send(result);
+    const user = await User.findOne({ email: req.body.email });
+
+    if (user.coin <= 1000)
+      return res.status(400).send({ message: "Insuffcient Coin" });
+
+    const updateUser = await User.findByIdAndUpdate(
+      user._id,
+      { subscription: true, coin: parseInt(user.coin) - 1000 },
+      { new: true }
+    );
+
+    return res.status(200).send(updateUser);
   } catch (error) {
     console.log(error.message);
     return res.status(500).send(error.message);
@@ -166,7 +177,7 @@ const updateCoin = async (req, res) => {
     const user = await User.findOne({ email: email });
     const updateUser = await User.findByIdAndUpdate(
       user._id,
-      { coin: parseInt(req.body.coin) + parseInt(user.coin)},
+      { coin: parseInt(req.body.coin) + parseInt(user.coin) },
       { new: true }
     );
 

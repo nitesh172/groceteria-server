@@ -19,7 +19,7 @@ var userSchema = new Schema(
       required: false,
       default: 100,
     },
-    subsription: {
+    subscription: {
       type: Boolean,
       required: false,
       default: false,
