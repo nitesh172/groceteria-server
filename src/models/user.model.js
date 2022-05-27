@@ -17,7 +17,7 @@ var userSchema = new Schema(
     coin: {
       type: Number,
       required: false,
-      default: 100,
+      default: 500,
     },
     subscription: {
       type: Boolean,

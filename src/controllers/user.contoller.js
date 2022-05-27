@@ -189,6 +189,21 @@ const updateCoin = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const updateUser = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    return res.status(200).send(updateUser);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send(error.message);
+  }
+};
+
 module.exports = {
   create,
   verifyOtp,
@@ -196,4 +211,5 @@ module.exports = {
   subscriptionCreate,
   subscriptionCheck,
   updateCoin,
+  updateProfile
 };
