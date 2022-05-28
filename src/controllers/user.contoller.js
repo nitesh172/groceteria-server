@@ -128,7 +128,7 @@ const subscriptionCreate = async (req, res) => {
 
     const user = await User.findOne({ email: req.body.email });
 
-    if (user.coin <= 1000)
+    if (user.coin <= 999.5)
       return res.status(400).send({ message: "Insuffcient Coin" });
 
     const subscriptionHolder = await Subscription.find({

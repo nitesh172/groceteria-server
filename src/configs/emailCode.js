@@ -109,7 +109,7 @@ module.exports = (otp) =>{
                               <tbody>
                                 <tr>
                                   <td style="width:120px;">
-                                    <img height="auto" src="" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="120" />
+                                    <img height="auto" src="https://www.dropbox.com/s/cu0rj3v2eghn1rd/alex_logo_white-removebg-preview.png?raw=1" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="120" />
                                   </td>
                                 </tr>
                               </tbody>
