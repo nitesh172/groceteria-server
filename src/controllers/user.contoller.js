@@ -8,7 +8,6 @@ const transporter = require("../configs/email");
 
 const User = require("../models/user.model");
 const Otp = require("../models/otp.model");
-const Subscription = require("../models/subscription.model");
 
 const newToken = (user) => {
   return jwt.sign({ user }, process.env.JWT_SECRET_KEY);
@@ -36,7 +35,6 @@ const create = async (req, res) => {
 
     transporter.sendMail(mailOptions, function (err, info) {
       if (err) console.log(err);
-      else console.log(info);
     });
 
     const salt = await bcrypt.genSalt(10);
@@ -55,60 +53,63 @@ const create = async (req, res) => {
 
     return res.status(200).send(result);
   } catch (error) {
-    console.log(error.message);
+    console.log({error: error.message});
+    return res.status(500).send({error: error.message});
   }
 };
 
 const verifyOtp = async (req, res) => {
-  const otpHolder = await Otp.find({
-    email: req.body.email,
-  });
-
-  if (otpHolder.length === 0)
-    return res.status(400).send({ message: "You use expire OTP!" });
-
-  const rightOtpFind = otpHolder[otpHolder.length - 1];
-
-  const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
-
-  if (rightOtpFind.email === req.body.email && validUser) {
-    const findUser = await User.findOne({
+  try {
+    const otpHolder = await Otp.find({
       email: req.body.email,
     });
-
-    console.log(findUser);
-
-    if (findUser) {
-      const OTPDelete = await Otp.deleteMany({
-        email: rightOtpFind.email,
+  
+    if (otpHolder.length === 0)
+      return res.status(400).send({ message: "You use expire OTP!" });
+  
+    const rightOtpFind = otpHolder[otpHolder.length - 1];
+  
+    const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
+  
+    if (rightOtpFind.email === req.body.email && validUser) {
+      const findUser = await User.findOne({
+        email: req.body.email,
       });
-
-      const token = newToken(findUser);
-
-      return res.status(201).send({
-        token: token,
-        data: findUser,
-      });
+  
+      if (findUser) {
+        const OTPDelete = await Otp.deleteMany({
+          email: rightOtpFind.email,
+        });
+  
+        const token = newToken(findUser);
+  
+        return res.status(201).send({
+          token: token,
+          data: findUser,
+        });
+      } else {
+        const user = new User(_.pick(req.body, ["email", "name"]));
+  
+        const temp = user.generateJWT();
+  
+        const result = await user.save();
+  
+        const OTPDelete = await Otp.deleteMany({
+          email: rightOtpFind.email,
+        });
+  
+        const token = newToken(result);
+  
+        return res.status(201).send({
+          token: token,
+          data: result,
+        });
+      }
     } else {
-      const user = new User(_.pick(req.body, ["email", "name"]));
-
-      const token = user.generateJWT();
-
-      const result = await user.save();
-
-      const OTPDelete = await Otp.deleteMany({
-        email: rightOtpFind.email,
-      });
-
-      token = newToken(result);
-
-      return res.status(201).send({
-        token: token,
-        data: result,
-      });
+      return res.status(400).send({ message: "Your OTP was Wrong!" });
     }
-  } else {
-    return res.status(400).send({ message: "Your OTP was Wrong!" });
+  } catch (error) {
+    console.log(error.message)
   }
 };
 
@@ -123,76 +124,10 @@ const profile = async (req, res) => {
   }
 };
 
-const subscriptionCreate = async (req, res) => {
-  try {
-
-    const user = await User.findOne({ email: req.body.email });
-
-    if (user.coin <= 999.5)
-      return res.status(400).send({ message: "Insuffcient Coin" });
-
-    const subscriptionHolder = await Subscription.find({
-      email: req.body.email,
-    });
-
-    if (subscriptionHolder.length !== 0)
-      return res.status(400).send({ message: "Already Subscription" });
-
-    const subscription = new Subscription(_.pick(req.body, ["email"]));
-
-    const result = await subscription.save();
-
-    const updateUser = await User.findByIdAndUpdate(
-      user._id,
-      { subscription: true, coin: parseInt(user.coin) - 1000 },
-      { new: true }
-    );
-
-    return res.status(200).send(updateUser);
-  } catch (error) {
-    console.log(error.message);
-    return res.status(500).send(error.message);
-  }
-};
-
-const subscriptionCheck = async (req, res) => {
-  try {
-    const email = req.params.email;
-    const subscriptionHolder = await Subscription.findOne({
-      email: email,
-    });
-
-    if (!subscriptionHolder)
-      return res.status(400).send({ message: "No Subscription" });
-
-    return res.status(200).send({ message: "Subscribed" });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(500).send(error.message);
-  }
-};
-
-const updateCoin = async (req, res) => {
-  try {
-    const email = req.params.email;
-    const user = await User.findOne({ email: email });
-    const updateUser = await User.findByIdAndUpdate(
-      user._id,
-      { coin: parseInt(req.body.coin) + parseInt(user.coin) },
-      { new: true }
-    );
-
-    return res.status(200).send(updateUser);
-  } catch (error) {
-    console.log(error.message);
-    return res.status(500).send(error.message);
-  }
-};
-
 const updateProfile = async (req, res) => {
   try {
     const updateUser = await User.findByIdAndUpdate(
-      req.params.id,
+      req.user._id,
       req.body,
       { new: true }
     );
@@ -208,8 +143,5 @@ module.exports = {
   create,
   verifyOtp,
   profile,
-  subscriptionCreate,
-  subscriptionCheck,
-  updateCoin,
   updateProfile
 };

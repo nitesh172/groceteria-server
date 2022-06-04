@@ -10,20 +10,30 @@ var userSchema = new Schema(
       type: String,
       required: true,
     },
+    mobile: {
+      type: Number,
+      required: false,
+    },
     name: {
       type: String,
       required: true,
     },
-    coin: {
+    address: {
+      type: Array,
+      required: false,
+    },
+    favourites: {
+      type: Array,
+      required: false
+    },
+    orders: {
+      type: Array,
+      required: false
+    },
+    wallet: {
       type: Number,
-      required: false,
-      default: 1000,
-    },
-    subscription: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
+      required: false
+    }
   },
   {
     timestamps: true,
