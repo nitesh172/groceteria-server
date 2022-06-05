@@ -8,24 +8,22 @@ var s3 = new aws.S3({
   secretAccessKey: process.env.secretAccessKey,
 })
 
-console.log(s3)
 
 const upload = multer({
   storage: multerS3({
     s3: s3,
-    bucket: "groceteria",
+    bucket: "groceteria/prodcuts",
     acl: "public-read",
     metadata: function (req, file, cb) {
-      console.log(file.fieldname)
       cb(null, { fieldName: file.fieldname })
     },
     key: function (req, file, cb) {
-      console.log(file.originalname)
       cb(null, Date.now() + "-" + file.originalname)
     },
   }),
 })
 
+console.log(upload)
 
 const uploadSingle = (fieldName) => {
   return (req, res, next) => {

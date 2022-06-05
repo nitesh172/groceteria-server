@@ -5,6 +5,6 @@ const router = Router()
 
 const { create } = require("../controllers/product.controller");
 
-router.route("/create").post(uploadSingle, create);
+router.route("/create").post(uploadSingle("file"), create);
 
 module.exports = router;
