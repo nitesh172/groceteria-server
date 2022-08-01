@@ -1,7 +1,7 @@
 require("dotenv").config()
 const jwt = require("jsonwebtoken")
 const User = require("../models/user.model")
-const redis = require("../Configs/redis")
+const redis = require("../configs/redis")
 
 const verifyToken = (token) => {
   return new Promise((resolve, reject) => {
