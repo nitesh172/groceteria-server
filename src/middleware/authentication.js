@@ -1,12 +1,11 @@
 require("dotenv").config()
 const jwt = require("jsonwebtoken")
 const User = require("../models/user.model")
-const redis = require("../configs/redis")
 
 const verifyToken = (token) => {
   return new Promise((resolve, reject) => {
     jwt.verify(token, process.env.JWT_SECRET_KEY, function (err, decoded) {
-      if (err) return reject("error", err)
+      if (err) return reject("error",err)
       resolve(decoded)
     })
   })
@@ -26,25 +25,14 @@ module.exports = async (req, res, next) => {
   let user
   try {
     user = await verifyToken(token)
+    const fetchedUser = await User.findById(user.user._id).lean().exec()
 
-    redis.get(`Users.${user.user._id}`, async (err, value) => {
-      if (err) console.log(err)
-
-      if (value) {
-        value = JSON.parse(value)
-        req.user = value
-      } else {
-        const value = await User.findById(user.user._id).lean().exec()
-
-        if (!value) return res.status(400).send({ message: "User not exist" })
-
-        redis.set(`Users.${user.user._id}`, JSON.stringify(value))
-
-        req.user = value
-      }
-    })
+    if(!fetchedUser) return res.status(400).send({ message: "User not exist" })
+    
+    req.user = fetchedUser
   } catch (error) {
     return res.status(401).send({ message: "token is not valid" })
   }
+
   next()
 }
