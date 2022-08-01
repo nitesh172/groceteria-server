@@ -30,11 +30,14 @@ module.exports = async (req, res, next) => {
     redis.get("Users", async (err, value) => {
       if (err) console.log(err)
 
+      console.log(value, "line 33")
       if (value) {
         let valueArr = JSON.parse(value)
+        console.log(valueArr, "line 36")
         value = valueArr.find((e) => e === user.user._id)
+        console.log(value, "line 38")
         if (value) {
-          return (req.user = value)
+          req.user = value
         } else {
           const valueUser = await User.findById(user.user._id).lean().exec()
 
@@ -43,6 +46,7 @@ module.exports = async (req, res, next) => {
           redis.set('Users', JSON.stringify([...valueArr, valueUser]))
           
           req.user = valueUser
+          console.log(valueUser, "line 49")
         }
       } else {
         const value = await User.findById(user.user._id).lean().exec()
