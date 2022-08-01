@@ -27,37 +27,18 @@ module.exports = async (req, res, next) => {
   try {
     user = await verifyToken(token)
 
-    redis.get("Users", async (err, value) => {
+    redis.get(`Users.${user.user._id}`, async (err, value) => {
       if (err) console.log(err)
 
-      console.log(value, "line 33")
       if (value) {
-        let valueArr = JSON.parse(value)
-        console.log(valueArr, "line 36")
-        value = valueArr.find((e) => e === user.user._id)
-        console.log(value, "line 38")
-        if (value) {
-          req.user = value
-        } else {
-          const valueUser = await User.findById(user.user._id).lean().exec()
-
-          if (!valueUser) return res.status(400).send({ message: "User not exist" })
-          
-          redis.set('Users', JSON.stringify([...valueArr, valueUser]))
-          
-          req.user = valueUser
-          console.log(valueUser, "line 49")
-        }
+        value = JSON.parse(value)
+        req.user = value
       } else {
         const value = await User.findById(user.user._id).lean().exec()
 
         if (!value) return res.status(400).send({ message: "User not exist" })
 
-        let valueArr = []
-
-        valueArr.push(value)
-
-        redis.set('Users', JSON.stringify(valueArr))
+        redis.set(`Users.${user.user._id}`, JSON.stringify(value))
 
         req.user = value
       }
