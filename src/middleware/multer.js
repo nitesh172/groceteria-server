@@ -23,8 +23,6 @@ const upload = multer({
   }),
 })
 
-console.log(upload)
-
 const uploadSingle = (fieldName) => {
   return (req, res, next) => {
       const createUserFun = upload.single(fieldName);
