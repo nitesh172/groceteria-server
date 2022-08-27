@@ -1,15 +1,47 @@
-const Product = require('../models/products.model')
+const Product = require("../models/products.model")
+const redis = require("../configs/redis")
 
 const create = async (req, res) => {
   try {
+    const product = await Product.create({
+      ...req.body,
+      productImgUrl: req.file?.location,
+    })
 
-    const product = await Product.create({...req.body, productImgUrl: req.file?.location})
-    
+    redis.get("Product", async (err, value) => {
+      if (err) console.log(err)
+
+      if (value) {
+        value = JSON.parse(value)
+
+        redis.set("Product", JSON.stringify([...value, product]))
+      } else {
+        value = await Product.find().lean().exec()
+
+        redis.set("Product", JSON.stringify(value))
+      }
+    })
+
+    redis.get("Brand", async (err, value) => {
+      if (err) console.log(err)
+
+      if (value) {
+        value = JSON.parse(value)
+
+        redis.set(
+          "Brand",
+          JSON.stringify({ ...value, products: [...value.products, product] })
+        )
+
+        console.log(value)
+      }
+    })
+
     res.status(201).send(product)
   } catch (error) {
-    console.log(error.message);
-    res.status(500).send(error.message);
+    console.log(error.message)
+    res.status(500).send(error.message)
   }
-};
+}
 
-module.exports = { create };
+module.exports = { create }
