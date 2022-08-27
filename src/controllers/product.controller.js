@@ -32,8 +32,6 @@ const create = async (req, res) => {
           "Brand",
           JSON.stringify({ ...value, products: [...value.products, product] })
         )
-
-        console.log(value)
       }
     })
 
@@ -44,4 +42,37 @@ const create = async (req, res) => {
   }
 }
 
-module.exports = { create }
+const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id)
+
+    redis.get("Product", async (err, fetchedPost) => {
+      if (err) console.log(err)
+
+      const products = await Product.find().lean().exec()
+      redis.set("Product", JSON.stringify(products))
+    })
+
+    redis.get("Brand", async (err, value) => {
+      if (err) console.log(err)
+
+      if (value) {
+        value = JSON.parse(value)
+
+        const products = await Product.find()
+          .select({ buyingPrice: 0 })
+          .lean()
+          .exec()
+
+        redis.set("Brand", JSON.stringify({ ...value, products: products }))
+      }
+    })
+
+    res.status(200).send(product)
+  } catch (error) {
+    console.log(error.message)
+    res.status(500).send(error.message)
+  }
+}
+
+module.exports = { create, deleteProduct }

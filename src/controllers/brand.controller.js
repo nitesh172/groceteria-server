@@ -1,11 +1,42 @@
 const { merge } = require("lodash")
-const Customization = require("../models/customization")
+const Customization = require("../models/customization.model")
 const Product = require("../models/products.model")
 const redis = require("../configs/redis")
 
 const createCustomization = async (req, res) => {
   try {
     const customization = await Customization.create(req.body)
+
+    redis.get("Customization", async (err, value) => {
+      if (err) console.log(err)
+
+      if (value) {
+        value = JSON.parse(value)
+
+        redis.set("Customization", JSON.stringify([...value, customization]))
+      } else {
+        value = await Customization.find().lean().exec()
+
+        redis.set("Customization", JSON.stringify(value))
+      }
+    })
+
+    redis.get("Brand", async (err, value) => {
+      if (err) console.log(err)
+
+      if (value) {
+        value = JSON.parse(value)
+
+        let featuresArr = value.features
+
+        merge(featuresArr, customization.customizationObject)
+
+        redis.set(
+          "Brand",
+          JSON.stringify({ ...value, features: featuresArr})
+        )
+      }
+    })
 
     res.status(201).send(customization)
   } catch (error) {
@@ -16,7 +47,6 @@ const createCustomization = async (req, res) => {
 
 const setup = async (req, res) => {
   try {
-
     redis.get("Brand", async (err, value) => {
       if (err) console.log(err)
 
@@ -27,7 +57,7 @@ const setup = async (req, res) => {
       } else {
         try {
           var customization = {}
-          
+
           const customizations = await Customization.find().lean().exec()
 
           customizations.forEach((element) => {
